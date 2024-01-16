@@ -269,9 +269,31 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  int neg = (x >> 31) & 1;
-  int cal = ((~neg +1) & (~x + 1)) | ((~!neg + 1) & x);
-  return 0;
+  int isneg = (x >> 31) & 1;
+  x = ((~isneg + 1) & (~x)) | ((~!isneg + 1) & x);
+
+  int has16 = !!((x >> 16) ^ 0);
+  int has16_id = has16 << 4;
+  x >>= has16_id;
+
+  int has8 = !!((x >> 8) ^ 0);
+  int has8_id = has8 << 3;
+  x >>= has8_id;
+
+  int has4 = !!((x >> 4) ^ 0);
+  int has4_id = has4 << 2;
+  x >>= has4_id;
+
+  int has2 = !!((x >> 2) ^ 0);
+  int has2_id = has2 << 1;
+  x >>= has2_id;
+
+  int has1 = !!((x >> 1) );
+  int has1_id = has1;
+  x >>= has1_id;
+
+  int count = has16_id + has8_id + has4_id + has2_id + has1_id + x + 1;
+  return count;
 }
 //float
 /* 
@@ -286,7 +308,20 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  int exp = (uf >> 23) & 0xff; // get the exp part
+  int sign = uf >> 31; //get the sign
+  int tail = uf & ~(~0 << 23); //get the tail part
+  unsigned res = 0;
+  if (!(exp ^ 0xff)) return uf;
+  if(exp){
+    exp += 1;
+    res = (sign << 31) + (exp << 23) + tail;
+  }
+  else{
+    res = (sign << 31) + (tail << 1);
+  }
+  return res;
+
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -301,7 +336,28 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int exp = (uf >> 23) & 0xff; // get the exp part
+  int sign = uf >> 31; //get the sign
+  int tail = uf & ~(~0 << 23); //get the tail part
+  int res = 0;
+  if(exp == 0xff) return 0x80000000u;
+
+  if(exp) exp -= 127;
+  else exp = -126;
+
+  if(exp < 0) return 0;
+  else if(exp > 30) return 0x80000000u;
+  else{
+    res = (1 << 23) + tail;
+    if(exp > 23){
+      res = res << (exp - 23);
+    }
+    else{
+      res = res >> (23 - exp);
+    }
+    if(sign) res = -res;
+  }
+  return res;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -317,5 +373,11 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  if(x < -127) return 0;
+  else if(x > 128) return 0x7f800000;
+  int sign = 0;
+  int exp = x + 127;
+  unsigned res = 0;
+  res = (sign << 31) + (exp << 23);
+  return res;
 }
