@@ -1,0 +1,114 @@
+Bigger than one parameter
+
+first parameter unsigned less equal than 0x7
+
++46 move the first parameter to eax
+
+the second parameter is determined by the first
+
+if the first is 2,the second is 0x2c3 which is 707
+
+
+the first parameter should unsigned <= 0xe
+
+the return value of func4 should be zero
+
+if the first parameter > 7 
+
+
+string length should be 6
+
+repeat 6 times
+
+73 72 65 79 6c 66
+s  r  e  y  l  f
+flyers
+
+
+Phase_6
++0 -- +15
+rsp:0x7fffffffddc0
+r13:0x7fffffffddc0
+rsi:0x7fffffffddc0
+
++18 -- +93
+rsp:0x7fffffffddd0
+rsi:6
+r13:0x7fffffffddc0 //point to arr{1,2,3,4,5,6} which is my input
+r14:0x7fffffffddc0 //point to arr
+r12d:0
+rbp:point to arr
+is arr[i] less than 6?
+is arr's 6 elements different?
+
++95 -- +121
+rsp:0x7fffffffddc0 //point to arr(1,2,3,4,5,6)
+rsi:0x7fffffffddd8 //point to 0
+r14:0x7fffffffddc0 //point to arr
+rax:0x7fffffffddc0 //point to arr
+ecx:7
+edx:7
+arr(1,2,3,4,5,6) -> arr(6,5,4,3,2,1) // 7-arr[i]
+
++123 -- +183
+// based on arr[i] rdx ranges from 0x6032d0 to 0x603320
+// Eventually,assign rdx to rsp+2*rsi+0x20
+// i.e. from rsp+0x20,create a new array of rdxs
+// eg: if arr is (6,5,4,3,2,1) 
+// then rsp+0x20 will refer to (0x603320,0x603310,...)
+// denote as brr
+
+rsi:0
+rsp:0x7fffffffddc0 //point to arr(6,5,4,3,2,1)
+ecx:6 > 1
+eax:1
+rdx:0x6032d0 //rdx+8 point to 0x6032e0
+
+rdx:0x6032e0
+eax:2 != ecx:6
+
+rdx:0x6032f0
+eax:3
+
+running until eax=6
+rsp+0x20 //point to 0x603320
+rsi:4
+ecx:5
+eax:1
+rsp+8+0x20 //point to 0x603310
+
+before +183
+rsp+0x20 points to brr{0x603320 -- 0x6032e0}
+
++183 -- +257
+// rbx is brr[1]
+// rax points to brr[2]
+// rsi points to brr[6]
+
+// rcx is brr[1]
+// LOOP Start point:
+// rdx = *(rax)
+// *(rcx + 8) = rdx
+// let rax points to the next brr
+// rcx = rdx
+// result:*(brr[1] + 8) = brr[2],...,*(brr[4] + 8) = brr[5]
+// *(brr[5] +8 ) = 0
+
+// JUMP TO +222
+// repeat the follows 5 times
+// rax = *(brr[1] + 8) 
+// rbx is brr[1]
+// make sure that *(brr[1]) >= *(brr[2])
+
+DESIGN brr
+0x6032d0:014c
+0x6032e0:00a8
+0x6032f0:039c
+0x603300:02b3
+0x603310:01dd
+0x603320:01bb
+
+32f0 3300 3310 3320 32d0 32e0
+3    4    5    6    1     2
+
+4    3    2    1    6     5
