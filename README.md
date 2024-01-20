@@ -5,6 +5,7 @@
 - [CSAPP Learning in winter vacation of 2024](#csapp-learning-in-winter-vacation-of-2024)
   - [Datalab  10h](#datalab--10h)
   - [Bomblab  15h](#bomblab--15h)
+  - [Attacklab](#attacklab)
 
 
 
@@ -32,3 +33,9 @@ Phase_6的逆向工程真是艰难，从bomb/trace.txt中就可以看出来本�
 - disassemble instruction1,instruction2 
 
 用第二条指令分好段后做单步执行，慢慢打印出该阶段的寄存器值就行了。
+
+## Attacklab
+遇到了奇奇怪怪的问题...  
+在Ubuntu22.04运行代码 `./ctarget -q` 时无论怎么输入得到的结果都是 `Segmentation Fault`，不得不转移精力去解决该问题。 
+所幸在StackOverFlow上找到了[解决方案](https://stackoverflow.com/questions/77568098/csapp-attack-lab-phase1-segmentation-fault-on-ubuntu22-04)。  
+Phase_1比较简单，反汇编后找到调用`getbuf()`前栈地址减少了多少以及找到`touch1()`的指令地址就行了。
