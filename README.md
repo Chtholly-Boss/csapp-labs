@@ -38,4 +38,7 @@ Phase_6的逆向工程真是艰难，从bomb/trace.txt中就可以看出来本�
 遇到了奇奇怪怪的问题...  
 在Ubuntu22.04运行代码 `./ctarget -q` 时无论怎么输入得到的结果都是 `Segmentation Fault`，不得不转移精力去解决该问题。 
 所幸在StackOverFlow上找到了[解决方案](https://stackoverflow.com/questions/77568098/csapp-attack-lab-phase1-segmentation-fault-on-ubuntu22-04)。  
-Phase_1比较简单，反汇编后找到调用`getbuf()`前栈地址减少了多少以及找到`touch1()`的指令地址就行了。
+Phase_1比较简单，反汇编后找到调用`getbuf()`前栈地址减少了多少以及找到`touch1()`的指令地址就行了。  
+
+Phase_2稍微绕了一下，要求注入自己的代码。我的解决方案是将返回地址`ret`指向`$rsp-0x28`，然后对`touch2`的指令地址做一次push后进行自己的代码操作。所以实际上只要从gdb中获取`%rsp-0x28`在哪里就可以了。  
+需要注意的是指令代码不需要调整字节序，是顺序存储的。
