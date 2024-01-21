@@ -41,4 +41,13 @@ Phase_6的逆向工程真是艰难，从bomb/trace.txt中就可以看出来本�
 Phase_1比较简单，反汇编后找到调用`getbuf()`前栈地址减少了多少以及找到`touch1()`的指令地址就行了。  
 
 Phase_2稍微绕了一下，要求注入自己的代码。我的解决方案是将返回地址`ret`指向`$rsp-0x28`，然后对`touch2`的指令地址做一次push后进行自己的代码操作。所以实际上只要从gdb中获取`%rsp-0x28`在哪里就可以了。  
-需要注意的是指令代码不需要调整字节序，是顺序存储的。
+需要注意的是指令代码不需要调整字节序，是顺序存储的。  
+
+Phase_3的提示很微妙。  
+```
+As a result, you will need to be careful
+where you place the string representation of your cookie.
+```
+`To be careful!`  
+在做lab的过程中会发现基本上buffer区域都会被覆盖掉，因此将cookie对应的ascii码直接放到缓冲区是不合适的，在`GDB`中探索一番过后发现放到返回地址的上方可行...  
+一注意到这个点，这个phase就很容易通过了。

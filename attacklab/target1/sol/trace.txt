@@ -1,2 +1,17 @@
 sp:0x5561dca0
 make ret sp-0x28,it will do some injected code
+
+
+touch3_addr:00000000004018fa
+my_cookie:0x59b997fa
+tranf_into_ascii: 35 39 62 39 39 37 66 61
+
+address:
+line    1   5561dc78
+        2   5561dc80
+        3   5561dc88
+        4   5561dc90
+        5   5561dc98
+        6   5561dca0
+
+break:0x0000000000401916
