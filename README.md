@@ -50,4 +50,7 @@ where you place the string representation of your cookie.
 ```
 `To be careful!`  
 在做lab的过程中会发现基本上buffer区域都会被覆盖掉，因此将cookie对应的ascii码直接放到缓冲区是不合适的，在`GDB`中探索一番过后发现放到返回地址的上方可行...  
-一注意到这个点，这个phase就很容易通过了。
+一注意到这个点，这个phase就很容易通过了。  
+
+Phase_4比之前的更有难度一些，目的是在一些指令中找到`gadgets`，然后组合到一起实现目的。
+对照指令表利用`ctrl+F`，耐心一点就能解决。

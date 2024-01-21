@@ -15,3 +15,21 @@ line    1   5561dc78
         6   5561dca0
 
 break:0x0000000000401916
+
+Phase_4:
+touch2:00000000004017ec
+start_farm --- mid_farm:line 104 --- line 192
+    11cc:	c7 00 48 89 c7 90    	movl   $0x90c78948,(%rax)
+    11d2:	90                   	nop
+    11d3:	5d                   	pop    %rbp
+    11d4:	c3                   	ret  
+    89 c7:eax -> edi
+    90: nop
+    5d:pop rbp
+    ret
+
+    11dd:	b8 29 58 90 c3       	mov    $0xc3905829,%eax
+    11e2:	5d                   	pop    %rbp
+    11e3:	c3          
+    58 : pop rax
+    c3:  ret
