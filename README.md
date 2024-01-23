@@ -6,6 +6,9 @@
   - [Datalab  10h](#datalab--10h)
   - [Bomblab  15h](#bomblab--15h)
   - [Attacklab](#attacklab)
+  - [Archlab](#archlab)
+    - [Part A](#part-a)
+    - [Part B](#part-b)
 
 
 
@@ -53,4 +56,12 @@ where you place the string representation of your cookie.
 一注意到这个点，这个phase就很容易通过了。  
 
 Phase_4比之前的更有难度一些，目的是在一些指令中找到`gadgets`，然后组合到一起实现目的。
-对照指令表利用`ctrl+F`，耐心一点就能解决。
+对照指令表利用`ctrl+F`，耐心一点就能解决。  
+
+## Archlab
+实验环境需要做些配置，参考 [archlab_env](https://zhuanlan.zhihu.com/p/641239498)<br>
+### Part A
+手工汇编实现链表求和以及一个copy函数，照着书上的板子写就可以了.
+### Part B
+增加一条iaddq指令，搞清楚指令在各阶段的内容就可以了。<br>
+通过这部分实验可以发现，同类指令只要编写得出一个，添加剩余的指令的难度不是很大。

