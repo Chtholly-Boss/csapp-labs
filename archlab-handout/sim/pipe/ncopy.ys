@@ -6,7 +6,8 @@
 # Include your name and ID here.
 #
 # Describe how and why you modified the baseline code.
-#
+# 1. Implement the iaddq instruction and Use it
+# 2. Loop Rolling 6 * 1
 ##################################################################
 # Do not modify this portion
 # Function prologue.
@@ -17,22 +18,77 @@ ncopy:
 # You can modify this portion
 	# Loop header
 	xorq %rax,%rax		# count = 0;
-	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
+		
+# Loop Rolling
+	rrmovq %rdx,%rbp
+	iaddq $-5,%rbp		# limit = len - 5
+	subq %rbp,%rdx		# len = len - limit
+	andq %rbp,%rbp		# limit <= 0?
+	jle L_rest_handle	
+L1:
+	mrmovq (%rdi), %r10	# read val from src...
+	mrmovq 0x8(%rdi), %r11	# read val from src...
+	mrmovq 0x10(%rdi), %r12	# read val from src...
+	mrmovq 0x18(%rdi), %r13	# read val from src...
+	mrmovq 0x20(%rdi), %r14	# read val from src...
+	mrmovq 0x28(%rdi), %r8	# read val from src...
 
-Loop:	mrmovq (%rdi), %r10	# read val from src...
 	rmmovq %r10, (%rsi)	# ...and store it to dst
+	rmmovq %r11, 0x8(%rsi)	# ...and store it to dst
+	rmmovq %r12, 0x10(%rsi)	# ...and store it to dst
+	rmmovq %r13, 0x18(%rsi)	# ...and store it to dst
+	rmmovq %r14, 0x20(%rsi)	# ...and store it to dst
+	rmmovq %r8, 0x28(%rsi)	# ...and store it to dst
+	
+check_1:
 	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10
-	addq %r10, %rax		# count++
-Npos:	irmovq $1, %r10
-	subq %r10, %rdx		# len--
-	irmovq $8, %r10
-	addq %r10, %rdi		# src++
-	addq %r10, %rsi		# dst++
+	jle check_2		# if so, goto check_next:	
+	iaddq	$1,%rax		# count++
+check_2:
+	andq %r11, %r11		# val <= 0?
+	jle check_3		# 
+	iaddq	$1,%rax		# count++
+check_3:
+	andq %r12, %r12		# val <= 0?
+	jle check_4			# 	
+	iaddq	$1,%rax		# count++
+check_4:
+	andq %r13, %r13		# val <= 0?
+	jle check_5			
+	iaddq	$1,%rax		# count++
+check_5:
+	andq %r14, %r14		# val <= 0?
+	jle check_6		
+	iaddq	$1,%rax		# count++
+check_6:
+	andq %r8, %r8		# val <= 0?
+	jle Npos		
+	iaddq	$1,%rax		# count++
+Npos:		
+	iaddq	$-6,%rbp	# limit -= 6	
+	iaddq	$0x30,%rdi		# src += 6
+	iaddq	$0x30,%rsi		# dst += 6
+	andq %rbp,%rbp		# limit > 0?
+	jg L1				# if so, goto L1:
+
+# Handle the rest elements
+L_rest_handle:
+	addq %rbp,%rdx
+	andq %rdx,%rdx		# len <= 0?
+	jle Done			# if so, goto Done:
+L_rest:
+	mrmovq (%rdi), %r10	# read val from src...
+	andq %r10, %r10		# val <= 0?
+	rmmovq %r10, (%rsi)	# ...and store it to dst
+	jle Npos_rest			# if so, goto Npos_rest:	
+	iaddq	$1,%rax		# count++
+Npos_rest:
+	iaddq	$-1,%rdx	# len -= 1	
+	iaddq	$8,%rdi		# src += 1
+	iaddq	$8,%rsi		# dst += 1
 	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+	jg L_rest				# if so, goto L_rest:
+
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
