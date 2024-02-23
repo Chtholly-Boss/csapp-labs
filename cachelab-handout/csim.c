@@ -8,14 +8,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
-// function may be used
-// atoi:convert a string to a interger
-// getopt:get optional speciphy
 typedef struct cache_line
 {
     int valid;
     int dirty;
     unsigned long tag;
+    int date;
 }cache_line;
 
 /* Results */
@@ -32,6 +30,8 @@ int verbose_flag = 0;
 unsigned long id = 0;
 unsigned long tag = 0;
 unsigned long offset = 0;
+int date = 0; // record the date
+
 
 char access_type;
 unsigned long address = 0;
@@ -39,15 +39,17 @@ int size = 0;
 int block_size = 0;
 cache_line* cur_cache_line = NULL;
 /* Process functions */
-void Cold_Loading();
-void Conflict();
+void Cold_Loading(cache_line* bad_line);
+void Conflict(cache_line* bad_line);
 void Option_Token(int argc,char* argv[]);
 void Help();
 void Address_Decode(cache_line* cache);
 void Load_Process();
 void Store_Process();
 void Modify_Process();
-
+/*************************************************/
+/****************** Main *************************/
+/*************************************************/
 int main(int argc,char* argv[]){
     Option_Token(argc,argv);
     /* Malloc memory for cache */
@@ -64,23 +66,25 @@ int main(int argc,char* argv[]){
         {
             (cache + i * lines + j)->valid = 0;
             (cache + i * lines + j)->dirty = 0;
+            (cache + i * lines + j)->date  = 0;
         }
         
     }
     /* process */
     FILE *trace = fopen(filename,"r");
-    if (!trace)
+    if (trace == NULL)
     {
         fprintf(stderr,"can not open file for reading\n");
         exit(1);
     }
-
     while (fscanf(trace," %c %lx,%d",&access_type,&address,&size) > 0)
     {   
+        date += 1;
         Address_Decode(cache);
-        Load_Process();
-        Store_Process();
-        Modify_Process();
+        if (access_type == 'L') Load_Process();
+        if (access_type == 'S') Store_Process();
+        if (access_type == 'M') Modify_Process();
+        //printf("%d\n",cur_cache_line->date);
     }
     printSummary(hits,misses,evictions);
     free(cache);
@@ -118,19 +122,21 @@ void Option_Token(int argc,char* argv[]){
         }
     }
 }
-void Cold_Loading(){
+void Cold_Loading(cache_line* bad_line){
     misses += 1;
-    cur_cache_line->valid = 1;
-    cur_cache_line->tag = tag;
+    bad_line->valid = 1;
+    bad_line->tag = tag;
+    bad_line->date = date;
 }
-void Conflict(){
+void Conflict(cache_line* bad_line){
     misses += 1;
     evictions += 1;
-    cur_cache_line->valid = 1;
-    cur_cache_line->tag = tag;
-    if (cur_cache_line->dirty == 1)
+    bad_line->valid = 1;
+    bad_line->tag = tag;
+    bad_line->date = date;
+    if (bad_line->dirty == 1)
     {
-        cur_cache_line->dirty = 0;
+        bad_line->dirty = 0;
     }
 }
 void Address_Decode(cache_line* cache){
@@ -140,66 +146,116 @@ void Address_Decode(cache_line* cache){
     offset = address % (1 << blocks);
     block_size = 1 << blocks;
     cur_cache_line = cache + id * lines;
-    //printf("%lx %lx %lx ",id,tag,offset);
 }
 void Load_Process(){
-    if (access_type == 'L')
+    /* Check if there is a hit and record the LRU */
+    int longest_period = cur_cache_line->date;
+    int cur_line;
+    cache_line* Lru_Line = cur_cache_line;
+    for (cur_line = 0; cur_line < lines; cur_line++)
+    {
+        if (cur_cache_line->date < longest_period)
         {
-            if (cur_cache_line->valid == 0)
-            {
-                Cold_Loading(cur_cache_line);
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss");
-            }else if ((cur_cache_line->tag != tag) || (offset > block_size))
-            {
-                Conflict(cur_cache_line);
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction");
-            }else
-            {
-                hits += 1;
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit");
-            }  
+            longest_period = cur_cache_line->date;
+            Lru_Line = cur_cache_line;
         }
+        
+        if (cur_cache_line->valid == 1 && ((cur_cache_line->tag == tag) && (offset <= block_size)))
+        {
+            hits += 1;
+            cur_cache_line->date = date;
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit ");
+            break;
+        }
+        else cur_cache_line++;
+    }
+    if (cur_line == lines)
+    {
+        /* if not, LRU policy */
+        if (Lru_Line->valid == 1)
+        {
+            Conflict(Lru_Line);
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction ");
+        } else
+        {
+            Cold_Loading(Lru_Line);
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss ");
+        }
+    }
 }
 void Store_Process(){
-    if (access_type == 'S')
+    int longest_period = cur_cache_line->date;
+    cache_line* Lru_Line = cur_cache_line;
+    int cur_line;
+    for (cur_line = 0; cur_line < lines; cur_line++)
+    {
+        if (cur_cache_line->date < longest_period)
         {
-            if (cur_cache_line->valid == 0)
-            {
-                Cold_Loading(cur_cache_line);
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss");
-            }else if ((cur_cache_line->tag != tag) || (offset > block_size))
-            {
-                Conflict(cur_cache_line);
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction");
-            }else
-            {
-                hits += 1;
-                //here set dirty to 1 will cause segfault
-                cur_cache_line->dirty = 1;
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit");
-            }
+            longest_period = cur_cache_line->date;
+            Lru_Line = cur_cache_line;
         }
+        /* Check if there is a hit and record the LRU */ 
+        if (cur_cache_line->valid == 1 && ((cur_cache_line->tag == tag) && (offset <= block_size)))
+        {
+            hits += 1;
+            cur_cache_line->date = date;
+            cur_cache_line->dirty = 1;
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit ");
+            break;
+        }
+        else cur_cache_line++;
+    }
+    if (cur_line == lines)
+    {
+        /* if not, LRU policy */
+        if (Lru_Line->valid == 1)
+        {
+            Conflict(Lru_Line);
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction ");
+        } else
+        {
+            Cold_Loading(Lru_Line);
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss ");
+        }
+    }
 }
 void Modify_Process(){
-    if (access_type == 'M')
+    int longest_period = cur_cache_line->date;
+    cache_line* Lru_Line = cur_cache_line;
+    int cur_line;
+    for (cur_line = 0; cur_line < lines; cur_line++)
+    {
+        if (cur_cache_line->date < longest_period)
         {
-            if (cur_cache_line->valid == 0)
-            {
-                Cold_Loading(cur_cache_line);
-                hits += 1;
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss hit");
-            }else if ((cur_cache_line->tag != tag) || (offset > block_size))
-            {
-                hits += 1;
-                Conflict(cur_cache_line);
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction hit");
-            }else
-            {
-                hits += 2;
-                cur_cache_line->dirty = 1;
-                if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit hits");
-            }
+            longest_period = cur_cache_line->date;
+            Lru_Line = cur_cache_line;
         }
+        /* Check if there is a hit and record the LRU */ 
+        if (cur_cache_line->valid == 1 && ((cur_cache_line->tag == tag) && (offset <= block_size)))
+        {
+            hits += 2;
+            cur_cache_line->date = date;
+            cur_cache_line->dirty = 1;
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"hit hit ");
+            break;
+        }
+        else cur_cache_line++;
+    }
+    if (cur_line == lines)
+    {
+        /* if not, LRU policy */
+        if (Lru_Line->valid == 1)
+        {
+            Conflict(Lru_Line);
+            hits += 1;
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss eviction hit ");
+        } else
+        {
+            Cold_Loading(Lru_Line);
+            hits += 1;
+            if (verbose_flag == 1) printf("%c %lx,%d %s\n",access_type,address,size,"miss hit ");
+        }   
+    }
 }
 void Help(){
     printf("Usage: ./csim-ref [-hv] -s <num> -E <num> -b <num> -t <file>\n");
@@ -215,4 +271,3 @@ void Help(){
     printf("  linux>  ./csim-ref -v -s 8 -E 2 -b 4 -t traces/yi.trace\n");
     exit(1);
 }
-
