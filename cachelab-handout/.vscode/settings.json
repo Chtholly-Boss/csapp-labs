@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.v": "verilog",
-        "random": "c"
+        "random": "c",
+        "algorithm": "c"
     }
 }
