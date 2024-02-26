@@ -3,17 +3,20 @@
 本仓库为本人大二寒假时学习CSAPP的lab记录。  
 目前完成的lab有：  
 - [CSAPP Learning in winter vacation of 2024](#csapp-learning-in-winter-vacation-of-2024)
-  - [Datalab  10h](#datalab--10h)
-  - [Bomblab  15h](#bomblab--15h)
+  - [Datalab](#datalab)
+  - [Bomblab](#bomblab)
   - [Attacklab](#attacklab)
   - [Archlab](#archlab)
     - [Part A](#part-a)
     - [Part B](#part-b)
     - [Part C](#part-c)
+  - [Cachelab](#cachelab)
+    - [Part A](#part-a-1)
+    - [Part B](#part-b-1)
 
 
 
-## Datalab  10h
+## Datalab
 通过 Datalab，我对bit level的运算更加熟悉了。从基本的 xor 实现到 !x，再到条件判断的实现都让我
 体会到机器通过bit进行运算的原理。其中，how_many_bits问题我没做出来，在咨询了大佬以及
 google后才写下答案...ORZ  
@@ -23,7 +26,7 @@ google后才写下答案...ORZ
 基本上每道题的思路通过代码都能直接看出来，在这里就不多重复了。 
 
 
-## Bomblab  15h
+## Bomblab
 BOOM！
 前面爆了几次以及调试过程中因为过于自信也爆了几次... 
 
@@ -69,3 +72,32 @@ Phase_4比之前的更有难度一些，目的是在一些指令中找到`gadget
 ### Part C
 So Hard<br>
 实现了IADDQ指令加上 6*1 循环展开勉强到了及格线，但是往下感觉有点困难，先搁置一阵子，以后有时间再精进吧...
+
+## Cachelab
+### Part A
+第一部分的目标是写一个组相联Cache，采取LRU的替换策略。<br>
+这部分分了几个阶段进行：<br>
+- 先实现一个特定的cache，具体来说是一个(4 sets,1 line,4 blocks)的直接映射缓存
+- 补全选项参数，实现通过命令行读入参数
+- 实现组相联与替换策略
+- 重构了代码，更加模块化
+总的来说算是C语言的热身复习，对于我这种C语言菜鸡来说是个不错的练习。通过写这个part，虽然不能说已经有了solid的语言基础了，
+但是打起来也比之前要有感觉多了。
+
+### Part B
+第二部分对我来说及其折磨，第一次进行性能优化...<br>
+一开始没有抓到重点，以为是 `blocking` 就是并行处理，循环展开之后代码极其冗长。<br>
+而后开始分析lab所使用的cache参数。<br>
+`s=5,b=5,E=1`.也就是说有32个set和32个字节的block。矩阵的元素是int，一个set可以放8个元素。<br>
+刚开始的时候没有特别针对测试用的三个矩阵进行设计，使用了8\*8模式处理后发现不是很理想，然后加上了一个转向操作，对32\*32的效果还行。
+但是此时并没有明白为什么会有性能提升。<br>
+看到handout的lab说明里有个zigzag pattern就实现了一下，结果还不如col-wise，陷入胶着。此外，由于思维陷入了用临时变量暂存缓存的圈子里，
+基本都是手动展开循环，导致代码过于丑陋。<br>
+在第三天重构了一下代码之后，思维慢慢打开，开始针对三个测试用例进行优化。下面直接说结果吧。
+- 61\*67 不规则性，为最大限度利用sets，考虑最小化剩余处理的数量，采取8*11,col-wise的access pattern
+- 32\*32 每8行会导致index冲突，且写与读也容易冲突。这一部分以8\*8为一个block进行blocking。非对角线直接用col-wise，对角线单独处理
+- 64\*64 每4行会导致index冲突，且4\*8的col-wise模式会导致写区域冲突，需要采取另一种方式。这里非对角线采取ring pattern，对角线仿照32\*32的处理<br>
+  
+
+最后贴一下成果吧
+![res of cachelab](./image/cachelab_res.JPEG "Cachelab")
